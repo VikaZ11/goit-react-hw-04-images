@@ -3,7 +3,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import * as API from 'services/api';
 import { Searchbar } from './Searchbar/Searchbar';
-import { Images } from './ImageGallery/ImageGallery';
+import { Images } from './Gallery/ImageGallery/ImageGallery';
 import { Loader } from './Loader/Loader';
 import { Button } from './Button/Button';
 
