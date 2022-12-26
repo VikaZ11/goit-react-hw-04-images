@@ -23,7 +23,7 @@ export function App() {
   const [page, setPage] = useState(1);
   const [images, setImages] = useState([]);
   const [totalHits, setTotalHits] = useState(0);
-  const [error, setError] = useState(false);
+  const [setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [visibleButton, setVisibleButton] = useState(false);
 
@@ -52,7 +52,6 @@ export function App() {
           setImages(prevImg => [...prevImg, ...images.hits]);
           setIsLoading(false);
           setTotalHits(images.totalHits);
-          setVisibleButton(true);
         }
       } catch (error) {
         setError(true);
@@ -62,7 +61,7 @@ export function App() {
     };
 
     fetchImg();
-  }, [query, page]);
+  }, [query, page, setError]);
 
   useEffect(() => {
     if (images.length < totalHits && images.length !== 0 && !visibleButton) {
