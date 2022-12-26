@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import * as API from 'services/api';
@@ -18,93 +18,89 @@ function smoothScroll() {
   });
 }
 
-export class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    images: [],
-    totalHits: 0,
-    error: false,
-    isLoading: false,
-    visibleButton: false,
-  };
+export function App() {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [totalHits, setTotalHits] = useState(0);
+  const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [visibleButton, setVisibleButton] = useState(false);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page, images, totalHits, visibleButton } = this.state;
+  useEffect(() => {
+    setImages([]);
+    setPage(1);
+    setQuery(query);
+  }, [query]);
 
-    if (prevState.query !== query) {
-      this.setState(prev => ({
-        ...prev,
-        images: [],
-        page: 1,
-        query,
-      }));
-    }
-
-    if (prevState.query !== query || prevState.page !== page) {
+  useEffect(() => {
+    const fetchImg = async () => {
       try {
-        this.setState({ isLoading: true });
-        const images = await API.getImages(query, page);
+        if (!query) {
+          return;
+        }
 
+        setIsLoading(true);
+        const images = await API.getImages(query, page);
         if (images.hits.length === 0) {
-          this.setState({ visibleButton: false, isLoading: false });
+          setVisibleButton(false);
+          setIsLoading(false);
           toast.error('Nothing was found for your request 😥', {
             autoClose: 3000,
           });
         } else {
-          this.setState(
-            state => ({
-              images: [...state.images, ...images.hits],
-              isLoading: false,
-              totalHits: images.totalHits,
-            }),
-            () => {
-              if (page !== 1) {
-                smoothScroll();
-              }
-            }
-          );
+          setImages(prevImg => [...prevImg, ...images.hits]);
+          setIsLoading(false);
+          setTotalHits(images.totalHits);
+          setVisibleButton(true);
         }
       } catch (error) {
-        this.setState({ error: true, isLoading: false });
+        setError(true);
+        setIsLoading(false);
         console.log(error);
       }
-    }
+    };
 
+    fetchImg();
+  }, [query, page]);
+
+  useEffect(() => {
     if (images.length < totalHits && images.length !== 0 && !visibleButton) {
-      this.setState({ visibleButton: true });
+      setVisibleButton(true);
     } else if (images.length >= totalHits && visibleButton) {
-      this.setState({ visibleButton: false });
+      setVisibleButton(false);
     }
-  }
+  }, [images, totalHits, visibleButton]);
 
-  onClickBtn = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  useEffect(() => {
+    if (page !== 1 && images.length) {
+      smoothScroll();
+    }
+  }, [page, images.length]);
+
+  const onClickBtn = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  handleSubmit = ({ query }) => {
-    this.setState({ query, page: 1 });
+  const handleSubmit = ({ query }) => {
+    setQuery(query);
+    setPage(1);
   };
 
-  render() {
-    const { images, visibleButton, isLoading } = this.state;
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gridGap: '16px',
-          paddingBottom: '24px',
-        }}
-      >
-        <Searchbar onSubmit={this.handleSubmit} />
-        {images.length !== 0 && <Images images={images} />}
-        {isLoading && <Loader />}
-        {visibleButton && <Button onClick={this.onClickBtn} />}
-        <ToastContainer />
-      </div>
-    );
-  }
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gridGap: '16px',
+        paddingBottom: '24px',
+      }}
+    >
+      <Searchbar onSubmit={handleSubmit} />
+      {images.length !== 0 && <Images images={images} />}
+      {isLoading && <Loader />}
+      {visibleButton && <Button onClick={onClickBtn} />}
+      <ToastContainer />
+    </div>
+  );
 }
